@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Kehadiran Dosen</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</head>
+<body>
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="login-overlay active">
+        <div class="login-box glass-panel">
+            <h2><i class="fa-solid fa-lock"></i> Login Monitoring</h2>
+            <p>Silakan masuk menggunakan akun Admin atau Prodi.</p>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email / Username</label>
+                    <input type="text" id="username" required placeholder="Masukkan Email atau Username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required placeholder="Masukkan Password">
+                </div>
+                <div id="loginError" style="color:var(--danger); display:none; margin-bottom:1rem; font-size:0.875rem;">Username atau password salah.</div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Masuk</button>
+            </form>
+            <div style="margin-top:1.5rem; text-align:center; font-size:0.875rem; color:var(--text-muted);">
+                <i>Admin: <b>rizki.nuggraha@gmail.com</b> (Pass: admin)<br>Prodi: <b>prodi</b> (Pass: prodi)</i>
+            </div>
+        </div>
+    </div>
+
+    <!-- OTP Verification Overlay -->
+    <div id="otpOverlay" class="login-overlay">
+        <div class="login-box glass-panel">
+            <h2><i class="fa-solid fa-envelope-circle-check"></i> Verifikasi Email</h2>
+            <p>Kode OTP telah dikirim ke <strong id="otpEmailDisplay"></strong></p>
+            <form id="otpForm" onsubmit="handleVerifyOTP(event)">
+                <div class="form-group">
+                    <label>Kode Verifikasi (OTP)</label>
+                    <input type="text" id="otpCode" required placeholder="Masukkan 6 angka" maxlength="6" style="text-align:center; letter-spacing:4px; font-size:1.25rem;">
+                </div>
+                <div id="otpError" style="color:var(--danger); display:none; margin-bottom:1rem; font-size:0.875rem;">Kode OTP salah. Coba lagi.</div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Verifikasi & Masuk</button>
+            </form>
+            <div style="margin-top:1.5rem; text-align:center; font-size:0.875rem; color:var(--text-muted);">
+                <i>(Cek folder Inbox/Spam di email Anda)</i>
+            </div>
+        </div>
+    </div>
+
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fa-solid fa-chalkboard-user"></i> Monitoring Kehadiran Dosen</h1>
+                <p>Kelola data kehadiran dosen dan realisasi perkuliahan bulanan.</p>
+            </div>
+            <div class="header-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn btn-secondary" onclick="toggleTheme()" id="btn-theme" title="Ganti Tema">
+                    <i class="fa-solid fa-sun"></i>
+                </button>
+                <button class="btn btn-secondary" onclick="exportExcel()">
+                    <i class="fa-solid fa-file-excel" style="color:#10b981;"></i> Cetak Excel
+                </button>
+                <button class="btn btn-secondary" onclick="exportPDF()">
+                    <i class="fa-solid fa-file-pdf" style="color:#ef4444;"></i> Cetak PDF
+                </button>
+                <button class="btn btn-primary" id="btn-add-dosen" onclick="openModal('dosenModal')">
+                    <i class="fa-solid fa-plus"></i> Tambah Data
+                </button>
+                <button class="btn btn-secondary" onclick="handleLogout()" title="Keluar">
+                    <i class="fa-solid fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </header>
+
+        <div class="table-container glass-panel">
+            <div class="table-header">
+                <h2>
+                    <span id="periodTitle">Daftar Kehadiran Semester ini / Tahun Akademik</span>
+                    <button class="btn-icon btn-edit" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; margin-left:0.5rem;" onclick="editPeriod()" title="Ubah Judul Periode"><i class="fa-solid fa-pen" style="font-size:1rem;"></i></button>
+                </h2>
+                <div class="filters-container" style="display:flex; gap:1rem; align-items:center;">
+                    <select id="filterTahun" onchange="filterTable()" style="padding:0.75rem 1rem; background:rgba(0, 0, 0, 0.2); border:1px solid var(--border-glass); border-radius:20px; color:white; outline:none; cursor:pointer;">
+                        <option value="" style="background:var(--bg-dark); color:white;">Semua Tahun Akademik</option>
+                    </select>
+                    <div class="search-box">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Cari Dosen atau Mata Kuliah..." onkeyup="filterTable()">
+                    </div>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="sticky-col">No</th>
+                            <th rowspan="2" class="sticky-col-2">Nama Dosen</th>
+                            <th rowspan="2">Mata Kuliah</th>
+                            <th rowspan="2">Program Studi</th>
+                            <th rowspan="2">Jenis Kelas</th>
+                            <th rowspan="2">Semester</th>
+                            <th rowspan="2">Tahun Akademik</th>
+                            <th rowspan="2">SKS</th>
+                            <th colspan="16" class="text-center" id="periodTableHeader">Daftar Pertemuan (Semester ini / Tahun Akademik)</th>
+                            <th rowspan="2" class="text-center">Jml Pertemuan</th>
+                            <th rowspan="2" class="text-center">Jml Kehadiran</th>
+                            <th rowspan="2" class="text-center action-col">Aksi</th>
+                        </tr>
+                        <tr id="meetingHeaders">
+                            <!-- Generated in JS -->
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Data will be populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-icon"><i class="fa-solid fa-folder-open"></i></div>
+                <h3>Belum ada data dosen</h3>
+                <p>Silakan klik tombol "Tambah Data" untuk memulai pencatatan.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Form: Add/Edit Dosen -->
+    <div class="modal-overlay" id="dosenModal">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h2 id="modalTitle">Tambah Data Dosen</h2>
+                <button class="close-btn" onclick="closeModal('dosenModal')"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="dosenForm" onsubmit="handleDosenSubmit(event)">
+                <input type="hidden" id="dosenId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="namaDosen">Nama Dosen</label>
+                        <input type="text" id="namaDosen" required placeholder="Masukkan Nama Dosen">
+                    </div>
+                    <div class="form-group">
+                        <label for="mataKuliah">Nama Mata Kuliah</label>
+                        <input type="text" id="mataKuliah" required placeholder="Masukkan Mata Kuliah">
+                    </div>
+                    <div class="form-group">
+                        <label for="programStudi">Program Studi</label>
+                        <input type="text" id="programStudi" required placeholder="Masukkan Program Studi">
+                    </div>
+                    <div class="form-group">
+                        <label for="jenisKelas">Jenis Kelas</label>
+                        <select id="jenisKelas" required>
+                            <option value="">Pilih Jenis Kelas</option>
+                            <option value="Reguler">Reguler</option>
+                            <option value="Karyawan">Karyawan</option>
+                            <option value="Eksekutif">Eksekutif</option>
+                            <option value="Online">Online</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="semester">Semester</label>
+                        <input type="number" id="semester" required min="1" max="14" placeholder="Cth: 1">
+                    </div>
+                    <div class="form-group">
+                        <label for="tahunAkademik">Tahun Akademik</label>
+                        <input type="text" id="tahunAkademik" required placeholder="Cth: 2026/2027">
+                    </div>
+                    <div class="form-group">
+                        <label for="sks">SKS</label>
+                        <input type="number" id="sks" required min="1" max="6" placeholder="Cth: 3">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('dosenModal')">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Form: Manage Attendance -->
+    <div class="modal-overlay" id="attendanceModal">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h2>Kelola Kehadiran: <span id="attDosenName" class="highlight-text"></span></h2>
+                <button class="close-btn" onclick="closeModal('attendanceModal')"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="attendanceForm" onsubmit="handleAttendanceSubmit(event)">
+                <input type="hidden" id="attDosenId">
+                
+                <div class="attendance-grid" id="attendanceGrid">
+                    <!-- Generated in JS -->
+                </div>
+
+                <div class="modal-footer mt-4">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('attendanceModal')">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Kehadiran</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
