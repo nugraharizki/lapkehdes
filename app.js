@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('light-theme');
     }
     updateThemeIcon();
-    
+
     checkAuth();
     updatePeriodDisplay();
     generateTableHeaders();
@@ -37,23 +37,23 @@ let tempAdminEmail = '';
 let generatedOtp = '';
 
 // Kredensial EmailJS (Isi dengan data dari emailjs.com)
-const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID'; 
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; 
-const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY'; 
+const EMAILJS_SERVICE_ID = 'service_w0gmdbb';
+const EMAILJS_TEMPLATE_ID = 'template_hluup7h';
+const EMAILJS_PUBLIC_KEY = 'NNtjCnTNu94WlWNha';
 
 function handleLogin(e) {
     e.preventDefault();
     const user = document.getElementById('username').value.toLowerCase();
     const pass = document.getElementById('password').value;
-    
+
     if ((user === 'rizki.nuggraha@gmail.com' || user === 'admin') && pass === 'admin') {
         document.getElementById('loginError').style.display = 'none';
         tempAdminEmail = user === 'admin' ? 'rizki.nuggraha@gmail.com' : user;
         document.getElementById('otpEmailDisplay').innerText = tempAdminEmail;
-        
+
         // Buat 6 angka random
         generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-        
+
         const btn = document.querySelector('#loginForm button');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
@@ -98,7 +98,7 @@ function showOtpOverlay() {
 function handleVerifyOTP(e) {
     e.preventDefault();
     const otp = document.getElementById('otpCode').value;
-    
+
     // Verifikasi dengan OTP dinamis atau fallback statis jika belum setup
     if (otp === generatedOtp || (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY' && otp === '123456')) {
         currentUser = 'admin';
@@ -121,11 +121,11 @@ function applyRolePermissions() {
     const addBtn = document.getElementById('btn-add-dosen');
     const editTitleBtn = document.querySelector('.btn-edit[title="Ubah Judul Periode"]');
     if (currentUser === 'prodi') {
-        if(addBtn) addBtn.style.display = 'none';
-        if(editTitleBtn) editTitleBtn.style.display = 'none';
+        if (addBtn) addBtn.style.display = 'none';
+        if (editTitleBtn) editTitleBtn.style.display = 'none';
     } else {
-        if(addBtn) addBtn.style.display = 'inline-flex';
-        if(editTitleBtn) editTitleBtn.style.display = 'inline-flex';
+        if (addBtn) addBtn.style.display = 'inline-flex';
+        if (editTitleBtn) editTitleBtn.style.display = 'inline-flex';
     }
     renderTable();
 }
@@ -137,9 +137,9 @@ function exportExcel() {
     const cloneTable = table.cloneNode(true);
     const rows = cloneTable.querySelectorAll('tr');
     rows.forEach(row => {
-        if(row.lastElementChild) row.removeChild(row.lastElementChild);
+        if (row.lastElementChild) row.removeChild(row.lastElementChild);
     });
-    
+
     const wb = XLSX.utils.table_to_book(cloneTable, { sheet: "Kehadiran" });
     const safePeriod = appPeriod.replace(/[\/\\]/g, '_');
     XLSX.writeFile(wb, `Monitoring_Kehadiran_Dosen_${safePeriod}.xlsx`);
@@ -149,11 +149,11 @@ function exportPDF() {
     const element = document.querySelector('.table-container');
     const safePeriod = appPeriod.replace(/[\/\\]/g, '_');
     const opt = {
-        margin:       0.5,
-        filename:     `Monitoring_Kehadiran_Dosen_${safePeriod}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'in', format: 'legal', orientation: 'landscape' }
+        margin: 0.5,
+        filename: `Monitoring_Kehadiran_Dosen_${safePeriod}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'legal', orientation: 'landscape' }
     };
     html2pdf().set(opt).from(element).save();
 }
@@ -239,9 +239,9 @@ function populateTahunFilter() {
     if (!filterSelect) return;
     const uniqueTahun = [...new Set(dosenData.map(d => d.tahunAkademik))].filter(Boolean);
     const currentValue = filterSelect.value;
-    
+
     filterSelect.innerHTML = '<option value="" style="background:var(--bg-dark); color:white;">Semua Tahun Akademik</option>';
-    
+
     uniqueTahun.forEach(tahun => {
         const option = document.createElement('option');
         option.value = tahun;
@@ -250,7 +250,7 @@ function populateTahunFilter() {
         option.style.color = 'white';
         filterSelect.appendChild(option);
     });
-    
+
     if (uniqueTahun.includes(currentValue)) {
         filterSelect.value = currentValue;
     }
@@ -401,7 +401,7 @@ function renderTable(data = dosenData) {
 // Handle Add/Edit Dosen Form Submit
 function handleDosenSubmit(e) {
     e.preventDefault();
-    
+
     const id = document.getElementById('dosenId').value;
     const newData = {
         namaDosen: document.getElementById('namaDosen').value,
@@ -442,7 +442,7 @@ function editDosen(id) {
         document.getElementById('semester').value = data.semester;
         document.getElementById('tahunAkademik').value = data.tahunAkademik;
         document.getElementById('sks').value = data.sks;
-        
+
         document.getElementById('modalTitle').innerText = 'Edit Data Dosen';
         openModal('dosenModal');
     }
@@ -468,8 +468,8 @@ function openAttendance(id) {
     const pertemuan = data.pertemuan || Array(MAX_MEETINGS).fill({});
     for (let i = 0; i < MAX_MEETINGS; i++) {
         const m = pertemuan[i];
-        document.getElementById(`tglPert${i+1}`).value = m.date || '';
-        document.getElementById(`statPert${i+1}`).value = m.status || '';
+        document.getElementById(`tglPert${i + 1}`).value = m.date || '';
+        document.getElementById(`statPert${i + 1}`).value = m.status || '';
     }
 
     openModal('attendanceModal');
@@ -480,7 +480,7 @@ function handleAttendanceSubmit(e) {
     e.preventDefault();
     const id = document.getElementById('attDosenId').value;
     const index = dosenData.findIndex(d => d.id === id);
-    
+
     if (index !== -1) {
         const pertemuan = [];
         for (let i = 1; i <= MAX_MEETINGS; i++) {
@@ -501,9 +501,9 @@ function filterTable() {
     const filterTahun = document.getElementById('filterTahun').value;
 
     const filteredData = dosenData.filter(d => {
-        const matchesQuery = d.namaDosen.toLowerCase().includes(query) || 
-                             d.mataKuliah.toLowerCase().includes(query) ||
-                             d.programStudi.toLowerCase().includes(query);
+        const matchesQuery = d.namaDosen.toLowerCase().includes(query) ||
+            d.mataKuliah.toLowerCase().includes(query) ||
+            d.programStudi.toLowerCase().includes(query);
         const matchesTahun = filterTahun === '' || d.tahunAkademik === filterTahun;
         return matchesQuery && matchesTahun;
     });
