@@ -60,6 +60,17 @@ body.light-theme tbody tr:hover {
 body.light-theme .att-card {
     background: rgba(255, 255, 255, 0.8);
     border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+body.light-theme .sticky-col,
+body.light-theme .sticky-col-2 {
+    background: #f8fafc;
+}
+
+body.light-theme th.sticky-col,
+body.light-theme th.sticky-col-2 {
+    background: #e2e8f0;
 }
 
 body.light-theme .att-card-header {
@@ -183,8 +194,12 @@ body {
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.02);
     box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6);
+}
+
+.btn-primary:active {
+    transform: translateY(0) scale(0.98);
 }
 
 .btn-secondary {
@@ -194,6 +209,11 @@ body {
 
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+    transform: translateY(0) scale(0.98);
 }
 
 .btn-sm {
@@ -208,6 +228,15 @@ body {
     display: inline-flex;
     justify-content: center;
     align-items: center;
+    transition: var(--transition);
+}
+
+.btn-icon:hover {
+    transform: scale(1.1);
+}
+
+.btn-icon:active {
+    transform: scale(0.9);
 }
 
 .btn-edit { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
@@ -338,6 +367,39 @@ tbody tr:hover {
 
 tbody tr:last-child td {
     border-bottom: none;
+}
+
+/* Sticky Columns */
+.sticky-col {
+    position: sticky !important;
+    left: 0;
+    z-index: 5;
+    background: var(--bg-dark);
+    min-width: 50px;
+}
+
+.sticky-col-2 {
+    position: sticky !important;
+    left: 50px;
+    z-index: 5;
+    background: var(--bg-dark);
+    box-shadow: 4px 0 10px rgba(0,0,0,0.2);
+}
+
+th.sticky-col,
+th.sticky-col-2 {
+    z-index: 15;
+    background: rgba(15, 23, 42, 0.95);
+}
+
+tbody tr:hover .sticky-col,
+tbody tr:hover .sticky-col-2 {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body.light-theme tbody tr:hover .sticky-col,
+body.light-theme tbody tr:hover .sticky-col-2 {
+    background: rgba(0, 0, 0, 0.03);
 }
 
 .action-col {
@@ -519,6 +581,13 @@ tbody tr:last-child td {
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-md);
     padding: 1rem;
+    transition: var(--transition);
+}
+
+.att-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    border-color: rgba(255,255,255,0.2);
 }
 
 .att-card-header {

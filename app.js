@@ -435,7 +435,7 @@ function renderTable(data = dosenData) {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${index + 1}</td>
+            <td class="sticky-col text-center">${index + 1}</td>
             <td class="sticky-col-2">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
                     <strong>${item.namaDosen}</strong>
