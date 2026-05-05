@@ -259,6 +259,9 @@ function generateAttendanceForm() {
                         <option value="Tidak Hadir">Tidak Hadir</option>
                     </select>
                 </div>
+                <button type="submit" class="btn btn-primary btn-sm" style="width:100%; justify-content:center; padding: 0.5rem; font-size: 0.85rem; margin-top: 0.5rem;">
+                    <i class="fa-solid fa-save"></i> Simpan
+                </button>
             </div>
         `;
     }
