@@ -1,5 +1,9 @@
+// Database Configuration (KVDB Online Sync)
+const KVDB_BUCKET = 'R4RXft1bNXpuaY7cFTQ3Ka';
+const isOnlineSyncEnabled = true;
+
 // State Management
-let dosenData = JSON.parse(localStorage.getItem('dosenData')) || [];
+let dosenData = [];
 let appPeriod = localStorage.getItem('appPeriod') || 'Semester ini / Tahun Akademik';
 let currentUser = localStorage.getItem('currentUser');
 let isLightMode = localStorage.getItem('isLightMode') === 'true';
@@ -7,20 +11,63 @@ let isLightMode = localStorage.getItem('isLightMode') === 'true';
 // Constants
 const MAX_MEETINGS = 16;
 
+// Load local first for fallback
+dosenData = JSON.parse(localStorage.getItem('dosenData')) || [];
+
 // Initial Render
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (isLightMode) {
         document.body.classList.add('light-theme');
     }
     updateThemeIcon();
 
     checkAuth();
-    updatePeriodDisplay();
     generateTableHeaders();
     generateAttendanceForm();
+    
+    if (isOnlineSyncEnabled) {
+        await loadDataFromOnline();
+    }
+    
+    updatePeriodDisplay();
     populateTahunFilter();
     renderTable();
 });
+
+async function loadDataFromOnline() {
+    try {
+        const responseData = await fetch(`https://kvdb.io/${KVDB_BUCKET}/dosenData`);
+        if (responseData.ok) {
+            const data = await responseData.json();
+            dosenData = Array.isArray(data) ? data : Object.values(data);
+        } else {
+            // First time using online DB, let's sync local to online!
+            const localData = JSON.parse(localStorage.getItem('dosenData'));
+            if (localData && localData.length > 0) {
+                dosenData = localData;
+                await fetch(`https://kvdb.io/${KVDB_BUCKET}/dosenData`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dosenData)
+                });
+            }
+        }
+
+        const responsePeriod = await fetch(`https://kvdb.io/${KVDB_BUCKET}/appPeriod`);
+        if (responsePeriod.ok) {
+            const period = await responsePeriod.text();
+            if (period) {
+                appPeriod = period;
+                localStorage.setItem('appPeriod', appPeriod);
+            }
+        }
+        
+        localStorage.setItem('dosenData', JSON.stringify(dosenData));
+    } catch (err) {
+        console.error("Gagal mengambil data dari database online:", err);
+        dosenData = JSON.parse(localStorage.getItem('dosenData')) || [];
+    }
+}
 
 // Authentication & Roles
 function checkAuth() {
@@ -219,10 +266,20 @@ function generateAttendanceForm() {
 }
 
 // Period Management
-function editPeriod() {
+async function editPeriod() {
     const newPeriod = prompt("Masukkan Judul Periode (contoh: Tahun Akademik Genap 2025/2026):", appPeriod);
     if (newPeriod !== null && newPeriod.trim() !== '') {
         appPeriod = newPeriod.trim();
+        if (isOnlineSyncEnabled) {
+            try {
+                await fetch(`https://kvdb.io/${KVDB_BUCKET}/appPeriod`, {
+                    method: 'PUT',
+                    body: appPeriod
+                });
+            } catch (err) {
+                console.error("Gagal menyimpan periode:", err);
+            }
+        }
         localStorage.setItem('appPeriod', appPeriod);
         updatePeriodDisplay();
     }
@@ -310,7 +367,22 @@ function calculateMetrics(pertemuan) {
 }
 
 // Save Data
-function saveData() {
+async function saveData() {
+    if (isOnlineSyncEnabled) {
+        try {
+            const btnList = document.querySelectorAll('button');
+            btnList.forEach(btn => btn.style.pointerEvents = 'none'); // prevent double click
+            await fetch(`https://kvdb.io/${KVDB_BUCKET}/dosenData`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dosenData)
+            });
+            btnList.forEach(btn => btn.style.pointerEvents = 'auto');
+        } catch (err) {
+            console.error("Gagal menyimpan data ke database online:", err);
+            alert("Gagal menyimpan data secara online.");
+        }
+    }
     localStorage.setItem('dosenData', JSON.stringify(dosenData));
     populateTahunFilter();
     renderTable();
