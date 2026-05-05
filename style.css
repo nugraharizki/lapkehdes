@@ -1,34 +1,34 @@
 :root {
-    --primary: #00f3ff;
-    --primary-hover: #00c3cc;
-    --secondary: #b100ff;
-    --bg-dark: #050510;
-    --bg-glass: rgba(10, 10, 25, 0.6);
-    --border-glass: rgba(0, 243, 255, 0.2);
-    --text-main: #e0f7fa;
-    --text-muted: #6b8c96;
-    --success: #39ff14;
-    --success-bg: rgba(57, 255, 20, 0.15);
-    --danger: #ff003c;
-    --danger-bg: rgba(255, 0, 60, 0.15);
-    --warning: #ffae00;
-    --radius-lg: 12px;
-    --radius-md: 6px;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --secondary: #8b5cf6;
+    --bg-dark: #0f172a;
+    --bg-glass: rgba(30, 41, 59, 0.7);
+    --border-glass: rgba(255, 255, 255, 0.1);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --success: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.15);
+    --danger: #ef4444;
+    --danger-bg: rgba(239, 68, 68, 0.15);
+    --warning: #f59e0b;
+    --radius-lg: 16px;
+    --radius-md: 8px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body.light-theme {
-    --bg-dark: #f0f4f8;
-    --bg-glass: rgba(255, 255, 255, 0.7);
-    --border-glass: rgba(0, 243, 255, 0.4);
-    --text-main: #0a1128;
-    --text-muted: #5c6b73;
-    --success-bg: rgba(57, 255, 20, 0.2);
-    --danger-bg: rgba(255, 0, 60, 0.2);
+    --bg-dark: #f8fafc;
+    --bg-glass: rgba(255, 255, 255, 0.85);
+    --border-glass: rgba(0, 0, 0, 0.08);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --success-bg: rgba(16, 185, 129, 0.15);
+    --danger-bg: rgba(239, 68, 68, 0.15);
 }
 
 body.light-theme .header-content h1 {
-    background: linear-gradient(135deg, #0a1128, #00c3cc);
+    background: linear-gradient(135deg, #1e3a8a, var(--primary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-shadow: none;
@@ -156,10 +156,9 @@ body {
     font-size: 2rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #fff, var(--primary));
+    background: linear-gradient(135deg, #fff, #a5b4fc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
 }
 
 .header-content p {
@@ -169,11 +168,11 @@ body {
 /* Glass Panels */
 .glass-panel {
     background: var(--bg-glass);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-lg);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 243, 255, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 /* Buttons */
@@ -190,16 +189,16 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: #050510;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 15px rgba(0, 243, 255, 0.4);
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(0, 243, 255, 0.6), 0 0 15px rgba(177, 0, 255, 0.4);
-    color: #000;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+    color: white;
 }
 
 .btn-primary:active {
@@ -337,16 +336,16 @@ th, td {
 }
 
 th {
-    background: rgba(5, 5, 16, 0.9);
+    background: rgba(15, 23, 42, 0.95);
     font-weight: 600;
-    color: var(--primary);
+    color: var(--text-muted);
     font-size: 0.875rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.05em;
     position: sticky;
     top: 0;
     z-index: 10;
-    border-bottom: 2px solid var(--primary);
+    border-bottom: 1px solid var(--border-glass);
 }
 
 th.text-center, td.text-center {
@@ -394,7 +393,7 @@ tbody tr:last-child td {
 th.sticky-col,
 th.sticky-col-2 {
     z-index: 15;
-    background: rgba(5, 5, 16, 0.98);
+    background: rgba(15, 23, 42, 0.98);
     border-right: 1px solid var(--border-glass);
 }
 
@@ -601,8 +600,7 @@ body.light-theme tbody tr:hover .sticky-col-2 {
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--border-glass);
-    color: var(--primary);
-    text-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
+    color: #60a5fa;
 }
 
 .empty-state {
