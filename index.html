@@ -96,9 +96,18 @@
                     <span id="periodTitle">Daftar Kehadiran Semester ini / Tahun Akademik</span>
                     <button class="btn-icon btn-edit" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; margin-left:0.5rem;" onclick="editPeriod()" title="Ubah Judul Periode"><i class="fa-solid fa-pen" style="font-size:1rem;"></i></button>
                 </h2>
-                <div class="filters-container" style="display:flex; gap:1rem; align-items:center;">
+                <div class="filters-container" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
                     <select id="filterTahun" onchange="filterTable()" style="padding:0.75rem 1rem; background:rgba(0, 0, 0, 0.2); border:1px solid var(--border-glass); border-radius:20px; color:white; outline:none; cursor:pointer;">
                         <option value="" style="background:var(--bg-dark); color:white;">Semua Tahun Akademik</option>
+                    </select>
+                    <select id="filterProdi" onchange="filterTable()" style="padding:0.75rem 1rem; background:rgba(0, 0, 0, 0.2); border:1px solid var(--border-glass); border-radius:20px; color:white; outline:none; cursor:pointer;">
+                        <option value="" style="background:var(--bg-dark); color:white;">Semua Prodi</option>
+                    </select>
+                    <select id="filterJenisKelas" onchange="filterTable()" style="padding:0.75rem 1rem; background:rgba(0, 0, 0, 0.2); border:1px solid var(--border-glass); border-radius:20px; color:white; outline:none; cursor:pointer;">
+                        <option value="" style="background:var(--bg-dark); color:white;">Semua Jenis Kelas</option>
+                    </select>
+                    <select id="filterDosen" onchange="filterTable()" style="padding:0.75rem 1rem; background:rgba(0, 0, 0, 0.2); border:1px solid var(--border-glass); border-radius:20px; color:white; outline:none; cursor:pointer;">
+                        <option value="" style="background:var(--bg-dark); color:white;">Semua Dosen</option>
                     </select>
                     <div class="search-box">
                         <i class="fa-solid fa-search"></i>

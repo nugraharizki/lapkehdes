@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     updatePeriodDisplay();
-    populateTahunFilter();
+    populateFilters();
     renderTable();
 });
 
@@ -293,26 +293,66 @@ function updatePeriodDisplay() {
     document.getElementById('periodTableHeader').innerText = 'Daftar Pertemuan (' + appPeriod + ')';
 }
 
-// Populate Filter
-function populateTahunFilter() {
-    const filterSelect = document.getElementById('filterTahun');
-    if (!filterSelect) return;
+// Populate Filters
+function populateFilters() {
+    // Tahun
+    const filterTahun = document.getElementById('filterTahun');
     const uniqueTahun = [...new Set(dosenData.map(d => d.tahunAkademik))].filter(Boolean);
-    const currentValue = filterSelect.value;
+    const currTahun = filterTahun ? filterTahun.value : '';
+    if (filterTahun) {
+        filterTahun.innerHTML = '<option value="" style="background:var(--bg-dark); color:white;">Semua Tahun Akademik</option>';
+        uniqueTahun.forEach(val => {
+            const opt = document.createElement('option');
+            opt.value = val; opt.textContent = val;
+            opt.style.background = 'var(--bg-dark)'; opt.style.color = 'white';
+            filterTahun.appendChild(opt);
+        });
+        if (uniqueTahun.includes(currTahun)) filterTahun.value = currTahun;
+    }
 
-    filterSelect.innerHTML = '<option value="" style="background:var(--bg-dark); color:white;">Semua Tahun Akademik</option>';
+    // Prodi
+    const filterProdi = document.getElementById('filterProdi');
+    const uniqueProdi = [...new Set(dosenData.map(d => d.programStudi))].filter(Boolean);
+    const currProdi = filterProdi ? filterProdi.value : '';
+    if (filterProdi) {
+        filterProdi.innerHTML = '<option value="" style="background:var(--bg-dark); color:white;">Semua Prodi</option>';
+        uniqueProdi.forEach(val => {
+            const opt = document.createElement('option');
+            opt.value = val; opt.textContent = val;
+            opt.style.background = 'var(--bg-dark)'; opt.style.color = 'white';
+            filterProdi.appendChild(opt);
+        });
+        if (uniqueProdi.includes(currProdi)) filterProdi.value = currProdi;
+    }
 
-    uniqueTahun.forEach(tahun => {
-        const option = document.createElement('option');
-        option.value = tahun;
-        option.textContent = tahun;
-        option.style.background = 'var(--bg-dark)';
-        option.style.color = 'white';
-        filterSelect.appendChild(option);
-    });
+    // Jenis Kelas
+    const filterJenisKelas = document.getElementById('filterJenisKelas');
+    const uniqueJenisKelas = [...new Set(dosenData.map(d => d.jenisKelas))].filter(Boolean);
+    const currJenisKelas = filterJenisKelas ? filterJenisKelas.value : '';
+    if (filterJenisKelas) {
+        filterJenisKelas.innerHTML = '<option value="" style="background:var(--bg-dark); color:white;">Semua Jenis Kelas</option>';
+        uniqueJenisKelas.forEach(val => {
+            const opt = document.createElement('option');
+            opt.value = val; opt.textContent = val;
+            opt.style.background = 'var(--bg-dark)'; opt.style.color = 'white';
+            filterJenisKelas.appendChild(opt);
+        });
+        if (uniqueJenisKelas.includes(currJenisKelas)) filterJenisKelas.value = currJenisKelas;
+    }
 
-    if (uniqueTahun.includes(currentValue)) {
-        filterSelect.value = currentValue;
+    // Dosen
+    const filterDosen = document.getElementById('filterDosen');
+    const uniqueDosen = [...new Set(dosenData.map(d => d.namaDosen))].filter(Boolean);
+    const currDosen = filterDosen ? filterDosen.value : '';
+    if (filterDosen) {
+        filterDosen.innerHTML = '<option value="" style="background:var(--bg-dark); color:white;">Semua Dosen</option>';
+        uniqueDosen.forEach(val => {
+            const opt = document.createElement('option');
+            opt.value = val; opt.textContent = val;
+            opt.style.background = 'var(--bg-dark)'; opt.style.color = 'white';
+            filterDosen.appendChild(opt);
+        });
+        if (uniqueDosen.includes(currDosen)) filterDosen.value = currDosen;
     }
 }
 
@@ -387,7 +427,7 @@ async function saveData() {
         }
     }
     localStorage.setItem('dosenData', JSON.stringify(dosenData));
-    populateTahunFilter();
+    populateFilters();
     renderTable();
 }
 
@@ -573,14 +613,20 @@ function handleAttendanceSubmit(e) {
 // Search and Filter
 function filterTable() {
     const query = document.getElementById('searchInput').value.toLowerCase();
-    const filterTahun = document.getElementById('filterTahun').value;
+    const filterTahun = document.getElementById('filterTahun') ? document.getElementById('filterTahun').value : '';
+    const filterProdi = document.getElementById('filterProdi') ? document.getElementById('filterProdi').value : '';
+    const filterJenisKelas = document.getElementById('filterJenisKelas') ? document.getElementById('filterJenisKelas').value : '';
+    const filterDosen = document.getElementById('filterDosen') ? document.getElementById('filterDosen').value : '';
 
     const filteredData = dosenData.filter(d => {
         const matchesQuery = d.namaDosen.toLowerCase().includes(query) ||
             d.mataKuliah.toLowerCase().includes(query) ||
             d.programStudi.toLowerCase().includes(query);
         const matchesTahun = filterTahun === '' || d.tahunAkademik === filterTahun;
-        return matchesQuery && matchesTahun;
+        const matchesProdi = filterProdi === '' || d.programStudi === filterProdi;
+        const matchesJenisKelas = filterJenisKelas === '' || d.jenisKelas === filterJenisKelas;
+        const matchesDosen = filterDosen === '' || d.namaDosen === filterDosen;
+        return matchesQuery && matchesTahun && matchesProdi && matchesJenisKelas && matchesDosen;
     });
     renderTable(filteredData);
 }
