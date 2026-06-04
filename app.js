@@ -299,8 +299,8 @@ function updatePeriodDisplay() {
 function normalizeDosenName(name) {
     if (!name) return '';
     let n = name.trim();
-    // Strip academic title prefixes
-    n = n.replace(/^(Prof\.?\s*Dr\.?|Prof\.?|Dr\.?|Dra?\.?|Ir\.?)\s*/i, '');
+    // Strip academic title prefixes (put Dra before Dr to prevent partial matching)
+    n = n.replace(/^(Prof\.?\s*Dr\.?|Prof\.?|Dra\.?|Dr\.?|Ir\.?)\s*/i, '');
     // Take only the core name before degree suffixes (first comma usually starts degrees)
     // But only if what follows the comma looks like a degree abbreviation
     const commaIdx = n.indexOf(',');
@@ -320,9 +320,9 @@ function formatDosenNameTitleCase(name) {
     if (!name) return '';
     let n = name.trim();
 
-    // Extract title prefix if present
+    // Extract title prefix if present (put Dra before Dr to prevent partial matching)
     let prefix = '';
-    const prefixMatch = n.match(/^(Prof\.?\s*Dr\.?|Prof\.?|Dr\.?|Dra?\.?|Ir\.?)\s*/i);
+    const prefixMatch = n.match(/^(Prof\.?\s*Dr\.?|Prof\.?|Dra\.?|Dr\.?|Ir\.?)\s*/i);
     if (prefixMatch) {
         // Standardize prefix formatting
         let rawPrefix = prefixMatch[1].trim();
