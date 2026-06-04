@@ -10,8 +10,6 @@ let isLightMode = localStorage.getItem('isLightMode') === 'true';
 
 // Constants
 const MAX_MEETINGS = 16;
-const AUTO_REFRESH_INTERVAL = 10000; // 10 detik
-let autoRefreshTimer = null;
 let isSaving = false; // flag to skip refresh during save
 
 // Load local first for fallback
@@ -35,11 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     updatePeriodDisplay();
     populateFilters();
     renderTable();
-
-    // Start auto-refresh polling
-    if (isOnlineSyncEnabled) {
-        startAutoRefresh();
-    }
 });
 
 async function loadDataFromOnline() {
@@ -77,100 +70,6 @@ async function loadDataFromOnline() {
     }
 }
 
-// Auto-Refresh: Poll for updates
-function startAutoRefresh() {
-    stopAutoRefresh();
-    autoRefreshTimer = setInterval(() => {
-        checkForUpdates();
-    }, AUTO_REFRESH_INTERVAL);
-}
-
-function stopAutoRefresh() {
-    if (autoRefreshTimer) {
-        clearInterval(autoRefreshTimer);
-        autoRefreshTimer = null;
-    }
-}
-
-async function checkForUpdates() {
-    // Skip if currently saving or a modal is open
-    if (isSaving) return;
-    const anyModalOpen = document.querySelector('.modal-overlay.active');
-    if (anyModalOpen) return;
-
-    try {
-        const response = await fetch(`https://kvdb.io/${KVDB_BUCKET}/dosenData`);
-        if (!response.ok) return;
-
-        const data = await response.json();
-        const newData = Array.isArray(data) ? data : Object.values(data);
-
-        // Compare with current data
-        const currentJson = JSON.stringify(dosenData);
-        const newJson = JSON.stringify(newData);
-
-        if (currentJson !== newJson) {
-            dosenData = newData;
-            localStorage.setItem('dosenData', JSON.stringify(dosenData));
-            populateFilters();
-            filterTable();
-            showAutoRefreshToast();
-        }
-
-        // Also check period
-        const responsePeriod = await fetch(`https://kvdb.io/${KVDB_BUCKET}/appPeriod`);
-        if (responsePeriod.ok) {
-            const period = await responsePeriod.text();
-            if (period && period !== appPeriod) {
-                appPeriod = period;
-                localStorage.setItem('appPeriod', appPeriod);
-                updatePeriodDisplay();
-            }
-        }
-    } catch (err) {
-        // Silent fail — don't interrupt user
-    }
-}
-
-function showAutoRefreshToast() {
-    // Remove existing toast if any
-    const existing = document.getElementById('autoRefreshToast');
-    if (existing) existing.remove();
-
-    const toast = document.createElement('div');
-    toast.id = 'autoRefreshToast';
-    toast.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Data diperbarui secara otomatis';
-    toast.style.cssText = `
-        position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999;
-        background: linear-gradient(135deg, #10b981, #059669); color: white;
-        padding: 0.75rem 1.25rem; border-radius: 12px;
-        font-size: 0.875rem; font-weight: 500; font-family: 'Inter', sans-serif;
-        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
-        display: flex; align-items: center; gap: 0.5rem;
-        animation: slideInToast 0.4s ease-out;
-        transition: opacity 0.4s ease;
-    `;
-    document.body.appendChild(toast);
-
-    // Add animation keyframes if not exists
-    if (!document.getElementById('toastAnimStyle')) {
-        const style = document.createElement('style');
-        style.id = 'toastAnimStyle';
-        style.textContent = `
-            @keyframes slideInToast {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    // Auto-dismiss after 3 seconds
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 400);
-    }, 3000);
-}
 
 // Authentication & Roles
 function checkAuth() {
@@ -928,8 +827,24 @@ function handleAttendanceSubmit(e) {
     }
 }
 
-// Search and Filter
-function filterTable() {
+// Search and Filter — fetches latest data on every filter change
+async function filterTable() {
+    // Fetch latest data from online before filtering (skip if saving)
+    if (isOnlineSyncEnabled && !isSaving) {
+        try {
+            const response = await fetch(`https://kvdb.io/${KVDB_BUCKET}/dosenData`);
+            if (response.ok) {
+                const data = await response.json();
+                const newData = Array.isArray(data) ? data : Object.values(data);
+                dosenData = newData;
+                localStorage.setItem('dosenData', JSON.stringify(dosenData));
+                populateFilters();
+            }
+        } catch (err) {
+            // Use local data if fetch fails
+        }
+    }
+
     const query = document.getElementById('searchInput').value.toLowerCase();
     const filterTahun = document.getElementById('filterTahun') ? document.getElementById('filterTahun').value : '';
     const filterProdi = document.getElementById('filterProdi') ? document.getElementById('filterProdi').value : '';
