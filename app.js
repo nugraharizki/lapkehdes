@@ -499,6 +499,7 @@ function openModal(modalId) {
     document.getElementById(modalId).classList.add('active');
     if (modalId === 'dosenModal') {
         populateDosenDropdown();
+        populateMataKuliahDropdown();
     }
 }
 
@@ -512,6 +513,13 @@ function closeModal(modalId) {
         document.getElementById('namaDosenInput').style.display = 'none';
         document.getElementById('namaDosenSelect').required = true;
         document.getElementById('namaDosenInput').required = false;
+
+        document.getElementById('mataKuliah').value = '';
+        document.getElementById('mataKuliahInput').value = '';
+        document.getElementById('mataKuliahInput').style.display = 'none';
+        document.getElementById('mataKuliahSelect').required = true;
+        document.getElementById('mataKuliahInput').required = false;
+
         document.getElementById('modalTitle').innerText = 'Tambah Data Dosen';
     }
 }
@@ -539,6 +547,45 @@ function handleDosenSelectChange() {
     const select = document.getElementById('namaDosenSelect');
     const input = document.getElementById('namaDosenInput');
     const hidden = document.getElementById('namaDosen');
+
+    if (select.value === '__new__') {
+        input.style.display = 'block';
+        input.required = true;
+        input.focus();
+        select.required = false;
+        hidden.value = '';
+    } else {
+        input.style.display = 'none';
+        input.required = false;
+        input.value = '';
+        select.required = true;
+        hidden.value = select.value;
+    }
+}
+
+// Populate Mata Kuliah Dropdown with unique names
+function populateMataKuliahDropdown() {
+    const select = document.getElementById('mataKuliahSelect');
+    const uniqueNames = [...new Set(dosenData.map(d => d.mataKuliah))].filter(Boolean).sort();
+    
+    select.innerHTML = '<option value="">Pilih Mata Kuliah</option>';
+    uniqueNames.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+    });
+    const newOpt = document.createElement('option');
+    newOpt.value = '__new__';
+    newOpt.textContent = '+ Tambah Mata Kuliah Baru...';
+    select.appendChild(newOpt);
+}
+
+// Handle Mata Kuliah Select Change
+function handleMataKuliahSelectChange() {
+    const select = document.getElementById('mataKuliahSelect');
+    const input = document.getElementById('mataKuliahInput');
+    const hidden = document.getElementById('mataKuliah');
 
     if (select.value === '__new__') {
         input.style.display = 'block';
@@ -714,9 +761,18 @@ function handleDosenSubmit(e) {
         return;
     }
 
+    const mkSelectVal = document.getElementById('mataKuliahSelect').value;
+    const mkInputVal = document.getElementById('mataKuliahInput').value.trim();
+    const mataKuliah = mkSelectVal === '__new__' ? mkInputVal : mkSelectVal;
+
+    if (!mataKuliah) {
+        alert('Silakan pilih atau masukkan Mata Kuliah.');
+        return;
+    }
+
     const newData = {
         namaDosen: namaDosen,
-        mataKuliah: document.getElementById('mataKuliah').value,
+        mataKuliah: mataKuliah,
         programStudi: document.getElementById('programStudi').value,
         jenisKelas: document.getElementById('jenisKelas').value,
         semester: document.getElementById('semester').value,
@@ -771,7 +827,25 @@ function editDosen(id) {
             select.required = false;
         }
 
-        document.getElementById('mataKuliah').value = data.mataKuliah;
+        // Set the Mata Kuliah dropdown value
+        const mkSelect = document.getElementById('mataKuliahSelect');
+        const mkInput = document.getElementById('mataKuliahInput');
+        const mkHidden = document.getElementById('mataKuliah');
+
+        const mkOptionExists = [...mkSelect.options].some(opt => opt.value === data.mataKuliah);
+        if (mkOptionExists) {
+            mkSelect.value = data.mataKuliah;
+            mkHidden.value = data.mataKuliah;
+            mkInput.style.display = 'none';
+            mkInput.required = false;
+        } else {
+            mkSelect.value = '__new__';
+            mkInput.style.display = 'block';
+            mkInput.value = data.mataKuliah;
+            mkInput.required = true;
+            mkSelect.required = false;
+        }
+
         document.getElementById('programStudi').value = data.programStudi;
         document.getElementById('jenisKelas').value = data.jenisKelas || '';
         document.getElementById('semester').value = data.semester;
