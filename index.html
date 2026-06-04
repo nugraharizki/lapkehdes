@@ -161,7 +161,13 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="namaDosen">Nama Dosen</label>
-                        <input type="text" id="namaDosen" required placeholder="Masukkan Nama Dosen">
+                        <select id="namaDosenSelect" required onchange="handleDosenSelectChange()">
+                            <option value="">Pilih Nama Dosen</option>
+                            <!-- Populated dynamically -->
+                            <option value="__new__">+ Tambah Dosen Baru...</option>
+                        </select>
+                        <input type="text" id="namaDosenInput" placeholder="Masukkan Nama Dosen Baru" style="display:none; margin-top:0.5rem;">
+                        <input type="hidden" id="namaDosen">
                     </div>
                     <div class="form-group">
                         <label for="mataKuliah">Nama Mata Kuliah</label>

@@ -24,11 +24,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkAuth();
     generateTableHeaders();
     generateAttendanceForm();
-    
+
     if (isOnlineSyncEnabled) {
         await loadDataFromOnline();
     }
-    
+
     updatePeriodDisplay();
     populateFilters();
     renderTable();
@@ -61,7 +61,7 @@ async function loadDataFromOnline() {
                 localStorage.setItem('appPeriod', appPeriod);
             }
         }
-        
+
         localStorage.setItem('dosenData', JSON.stringify(dosenData));
     } catch (err) {
         console.error("Gagal mengambil data dari database online:", err);
@@ -359,6 +359,9 @@ function populateFilters() {
 // Modal Logic
 function openModal(modalId) {
     document.getElementById(modalId).classList.add('active');
+    if (modalId === 'dosenModal') {
+        populateDosenDropdown();
+    }
 }
 
 function closeModal(modalId) {
@@ -366,7 +369,51 @@ function closeModal(modalId) {
     if (modalId === 'dosenModal') {
         document.getElementById('dosenForm').reset();
         document.getElementById('dosenId').value = '';
+        document.getElementById('namaDosen').value = '';
+        document.getElementById('namaDosenInput').value = '';
+        document.getElementById('namaDosenInput').style.display = 'none';
+        document.getElementById('namaDosenSelect').required = true;
+        document.getElementById('namaDosenInput').required = false;
         document.getElementById('modalTitle').innerText = 'Tambah Data Dosen';
+    }
+}
+
+// Populate Dosen Dropdown with unique names
+function populateDosenDropdown() {
+    const select = document.getElementById('namaDosenSelect');
+    const uniqueNames = [...new Set(dosenData.map(d => d.namaDosen))].filter(Boolean).sort();
+    // Preserve options: default + dynamic + "Tambah Baru"
+    select.innerHTML = '<option value="">Pilih Nama Dosen</option>';
+    uniqueNames.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
+    });
+    const newOpt = document.createElement('option');
+    newOpt.value = '__new__';
+    newOpt.textContent = '+ Tambah Dosen Baru...';
+    select.appendChild(newOpt);
+}
+
+// Handle Dosen Select Change
+function handleDosenSelectChange() {
+    const select = document.getElementById('namaDosenSelect');
+    const input = document.getElementById('namaDosenInput');
+    const hidden = document.getElementById('namaDosen');
+
+    if (select.value === '__new__') {
+        input.style.display = 'block';
+        input.required = true;
+        input.focus();
+        select.required = false;
+        hidden.value = '';
+    } else {
+        input.style.display = 'none';
+        input.required = false;
+        input.value = '';
+        select.required = true;
+        hidden.value = select.value;
     }
 }
 
@@ -518,8 +565,17 @@ function handleDosenSubmit(e) {
     e.preventDefault();
 
     const id = document.getElementById('dosenId').value;
+    const selectVal = document.getElementById('namaDosenSelect').value;
+    const inputVal = document.getElementById('namaDosenInput').value.trim();
+    const namaDosen = selectVal === '__new__' ? inputVal : selectVal;
+
+    if (!namaDosen) {
+        alert('Silakan pilih atau masukkan Nama Dosen.');
+        return;
+    }
+
     const newData = {
-        namaDosen: document.getElementById('namaDosen').value,
+        namaDosen: namaDosen,
         mataKuliah: document.getElementById('mataKuliah').value,
         programStudi: document.getElementById('programStudi').value,
         jenisKelas: document.getElementById('jenisKelas').value,
@@ -550,16 +606,37 @@ function editDosen(id) {
     const data = dosenData.find(d => d.id === id);
     if (data) {
         document.getElementById('dosenId').value = data.id;
-        document.getElementById('namaDosen').value = data.namaDosen;
+
+        // Open modal first to populate dropdown
+        document.getElementById('modalTitle').innerText = 'Edit Data Dosen';
+        openModal('dosenModal');
+
+        // Set the dropdown value
+        const select = document.getElementById('namaDosenSelect');
+        const input = document.getElementById('namaDosenInput');
+        const hidden = document.getElementById('namaDosen');
+
+        // Check if the name exists in the dropdown options
+        const optionExists = [...select.options].some(opt => opt.value === data.namaDosen);
+        if (optionExists) {
+            select.value = data.namaDosen;
+            hidden.value = data.namaDosen;
+            input.style.display = 'none';
+            input.required = false;
+        } else {
+            select.value = '__new__';
+            input.style.display = 'block';
+            input.value = data.namaDosen;
+            input.required = true;
+            select.required = false;
+        }
+
         document.getElementById('mataKuliah').value = data.mataKuliah;
         document.getElementById('programStudi').value = data.programStudi;
         document.getElementById('jenisKelas').value = data.jenisKelas || '';
         document.getElementById('semester').value = data.semester;
         document.getElementById('tahunAkademik').value = data.tahunAkademik;
         document.getElementById('sks').value = data.sks;
-
-        document.getElementById('modalTitle').innerText = 'Edit Data Dosen';
-        openModal('dosenModal');
     }
 }
 
