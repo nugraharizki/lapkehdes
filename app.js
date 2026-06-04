@@ -293,6 +293,19 @@ function updatePeriodDisplay() {
     document.getElementById('periodTableHeader').innerText = 'Daftar Pertemuan (' + appPeriod + ')';
 }
 
+// Helper: Get unique dosen names (case-insensitive, whitespace-normalized)
+function getUniqueDosenNames() {
+    const seen = new Map();
+    dosenData.forEach(d => {
+        if (!d.namaDosen) return;
+        const normalized = d.namaDosen.trim().replace(/\s+/g, ' ').toLowerCase();
+        if (!seen.has(normalized)) {
+            seen.set(normalized, d.namaDosen.trim());
+        }
+    });
+    return [...seen.values()].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+}
+
 // Populate Filters
 function populateFilters() {
     // Tahun
@@ -340,9 +353,9 @@ function populateFilters() {
         if (uniqueJenisKelas.includes(currJenisKelas)) filterJenisKelas.value = currJenisKelas;
     }
 
-    // Dosen
+    // Dosen (deduplicated, case-insensitive)
     const filterDosen = document.getElementById('filterDosen');
-    const uniqueDosen = [...new Set(dosenData.map(d => d.namaDosen))].filter(Boolean);
+    const uniqueDosen = getUniqueDosenNames();
     const currDosen = filterDosen ? filterDosen.value : '';
     if (filterDosen) {
         filterDosen.innerHTML = '<option value="" style="background:var(--bg-dark); color:white;">Semua Dosen</option>';
@@ -352,7 +365,7 @@ function populateFilters() {
             opt.style.background = 'var(--bg-dark)'; opt.style.color = 'white';
             filterDosen.appendChild(opt);
         });
-        if (uniqueDosen.includes(currDosen)) filterDosen.value = currDosen;
+        if (uniqueDosen.some(v => v.toLowerCase() === currDosen.toLowerCase())) filterDosen.value = currDosen;
     }
 }
 
@@ -378,10 +391,10 @@ function closeModal(modalId) {
     }
 }
 
-// Populate Dosen Dropdown with unique names
+// Populate Dosen Dropdown with unique names (case-insensitive dedup)
 function populateDosenDropdown() {
     const select = document.getElementById('namaDosenSelect');
-    const uniqueNames = [...new Set(dosenData.map(d => d.namaDosen))].filter(Boolean).sort();
+    const uniqueNames = getUniqueDosenNames();
     // Preserve options: default + dynamic + "Tambah Baru"
     select.innerHTML = '<option value="">Pilih Nama Dosen</option>';
     uniqueNames.forEach(name => {
@@ -702,7 +715,7 @@ function filterTable() {
         const matchesTahun = filterTahun === '' || d.tahunAkademik === filterTahun;
         const matchesProdi = filterProdi === '' || d.programStudi === filterProdi;
         const matchesJenisKelas = filterJenisKelas === '' || d.jenisKelas === filterJenisKelas;
-        const matchesDosen = filterDosen === '' || d.namaDosen === filterDosen;
+        const matchesDosen = filterDosen === '' || d.namaDosen.trim().toLowerCase() === filterDosen.trim().toLowerCase();
         return matchesQuery && matchesTahun && matchesProdi && matchesJenisKelas && matchesDosen;
     });
     renderTable(filteredData);
