@@ -313,6 +313,55 @@ function normalizeDosenName(name) {
     return n.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
+// Helper: Format dosen name to Title Case
+function formatDosenNameTitleCase(name) {
+    if (!name) return '';
+    let n = name.trim();
+
+    // Extract title prefix if present
+    let prefix = '';
+    const prefixMatch = n.match(/^(Prof\.?\s*Dr\.?|Prof\.?|Dr\.?|Dra?\.?|Ir\.?)\s*/i);
+    if (prefixMatch) {
+        // Standardize prefix formatting
+        let rawPrefix = prefixMatch[1].trim();
+        // Capitalize prefix properly
+        const prefixMap = {
+            'prof dr': 'Prof. Dr.', 'prof. dr': 'Prof. Dr.', 'prof. dr.': 'Prof. Dr.',
+            'prof': 'Prof.', 'prof.': 'Prof.',
+            'dr': 'Dr.', 'dr.': 'Dr.',
+            'dra': 'Dra.', 'dra.': 'Dra.',
+            'ir': 'Ir.', 'ir.': 'Ir.'
+        };
+        prefix = prefixMap[rawPrefix.toLowerCase().replace(/\s+/g, ' ')] || rawPrefix;
+        n = n.substring(prefixMatch[0].length);
+    }
+
+    // Extract degree suffix if present (after first comma that starts a degree)
+    let suffix = '';
+    const commaIdx = n.indexOf(',');
+    if (commaIdx > 0) {
+        const afterComma = n.substring(commaIdx + 1).trim();
+        if (/^[A-Za-z]{1,4}\./.test(afterComma) || /^(S|M|P|Ph|Dr)\b/i.test(afterComma)) {
+            suffix = n.substring(commaIdx); // includes the comma
+            n = n.substring(0, commaIdx);
+        }
+    }
+
+    // Convert core name to Title Case
+    const titleCaseName = n.trim().replace(/\s+/g, ' ').split(' ').map(word => {
+        if (word.length === 0) return '';
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(' ');
+
+    // Reassemble: prefix + title-case name + suffix
+    let result = '';
+    if (prefix) result += prefix + ' ';
+    result += titleCaseName;
+    if (suffix) result += suffix;
+
+    return result.trim();
+}
+
 // Helper: Get unique dosen names (case-insensitive, title/degree-normalized)
 function getUniqueDosenNames() {
     const seen = new Map();
@@ -320,7 +369,8 @@ function getUniqueDosenNames() {
         if (!d.namaDosen) return;
         const normalized = normalizeDosenName(d.namaDosen);
         if (!seen.has(normalized)) {
-            seen.set(normalized, d.namaDosen.trim());
+            // Store the formatted (Title Case) version
+            seen.set(normalized, formatDosenNameTitleCase(d.namaDosen));
         }
     });
     return [...seen.values()].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
@@ -611,7 +661,7 @@ function renderTable(data = dosenData) {
             <td class="sticky-col text-center">${index + 1}</td>
             <td class="sticky-col-2">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
-                    <strong>${item.namaDosen}</strong>
+                    <strong>${formatDosenNameTitleCase(item.namaDosen)}</strong>
                     <button class="btn btn-icon btn-attendance" style="width:28px; height:28px; padding:0; flex-shrink:0;" onclick="openAttendance('${item.id}')" title="Isi Kehadiran">
                         <i class="fa-solid fa-calendar-check" style="font-size:0.8rem;"></i>
                     </button>
@@ -740,7 +790,7 @@ function openAttendance(id) {
     if (!data) return;
 
     document.getElementById('attDosenId').value = data.id;
-    document.getElementById('attDosenName').innerText = data.namaDosen;
+    document.getElementById('attDosenName').innerText = formatDosenNameTitleCase(data.namaDosen);
 
     // Populate current attendance
     const pertemuan = data.pertemuan || Array(MAX_MEETINGS).fill({});
