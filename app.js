@@ -293,12 +293,32 @@ function updatePeriodDisplay() {
     document.getElementById('periodTableHeader').innerText = 'Daftar Pertemuan (' + appPeriod + ')';
 }
 
-// Helper: Get unique dosen names (case-insensitive, whitespace-normalized)
+// Helper: Normalize dosen name to core name (strip titles & degrees)
+function normalizeDosenName(name) {
+    if (!name) return '';
+    let n = name.trim();
+    // Strip academic title prefixes
+    n = n.replace(/^(Prof\.?\s*Dr\.?|Prof\.?|Dr\.?|Dra?\.?|Ir\.?)\s*/i, '');
+    // Take only the core name before degree suffixes (first comma usually starts degrees)
+    // But only if what follows the comma looks like a degree abbreviation
+    const commaIdx = n.indexOf(',');
+    if (commaIdx > 0) {
+        const afterComma = n.substring(commaIdx + 1).trim();
+        // Check if after comma starts with common degree patterns
+        if (/^[A-Za-z]{1,4}\./.test(afterComma) || /^(S|M|P|Ph|Dr)\b/i.test(afterComma)) {
+            n = n.substring(0, commaIdx);
+        }
+    }
+    // Normalize whitespace and case
+    return n.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+// Helper: Get unique dosen names (case-insensitive, title/degree-normalized)
 function getUniqueDosenNames() {
     const seen = new Map();
     dosenData.forEach(d => {
         if (!d.namaDosen) return;
-        const normalized = d.namaDosen.trim().replace(/\s+/g, ' ').toLowerCase();
+        const normalized = normalizeDosenName(d.namaDosen);
         if (!seen.has(normalized)) {
             seen.set(normalized, d.namaDosen.trim());
         }
@@ -366,6 +386,59 @@ function populateFilters() {
             filterDosen.appendChild(opt);
         });
         if (uniqueDosen.some(v => v.toLowerCase() === currDosen.toLowerCase())) filterDosen.value = currDosen;
+    }
+
+    // Bulan & Tahun Pertemuan
+    populateDateFilters();
+}
+
+// Populate Month/Year filters from meeting dates
+function populateDateFilters() {
+    const months = new Set();
+    const years = new Set();
+    const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+    dosenData.forEach(d => {
+        const pertemuan = d.pertemuan || [];
+        pertemuan.forEach(p => {
+            if (p.date) {
+                const dt = new Date(p.date);
+                if (!isNaN(dt)) {
+                    months.add(dt.getMonth()); // 0-11
+                    years.add(dt.getFullYear());
+                }
+            }
+        });
+    });
+
+    // Bulan filter
+    const filterBulan = document.getElementById('filterBulan');
+    const currBulan = filterBulan ? filterBulan.value : '';
+    if (filterBulan) {
+        filterBulan.innerHTML = '<option value="" style="background:var(--bg-dark); color:white;">Semua Bulan</option>';
+        [...months].sort((a, b) => a - b).forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = monthNames[m];
+            opt.style.background = 'var(--bg-dark)'; opt.style.color = 'white';
+            filterBulan.appendChild(opt);
+        });
+        if (currBulan !== '') filterBulan.value = currBulan;
+    }
+
+    // Tahun Pertemuan filter
+    const filterTahunPert = document.getElementById('filterTahunPert');
+    const currTahunPert = filterTahunPert ? filterTahunPert.value : '';
+    if (filterTahunPert) {
+        filterTahunPert.innerHTML = '<option value="" style="background:var(--bg-dark); color:white;">Semua Tahun</option>';
+        [...years].sort((a, b) => a - b).forEach(y => {
+            const opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = y;
+            opt.style.background = 'var(--bg-dark)'; opt.style.color = 'white';
+            filterTahunPert.appendChild(opt);
+        });
+        if (currTahunPert !== '') filterTahunPert.value = currTahunPert;
     }
 }
 
@@ -707,6 +780,8 @@ function filterTable() {
     const filterProdi = document.getElementById('filterProdi') ? document.getElementById('filterProdi').value : '';
     const filterJenisKelas = document.getElementById('filterJenisKelas') ? document.getElementById('filterJenisKelas').value : '';
     const filterDosen = document.getElementById('filterDosen') ? document.getElementById('filterDosen').value : '';
+    const filterBulan = document.getElementById('filterBulan') ? document.getElementById('filterBulan').value : '';
+    const filterTahunPert = document.getElementById('filterTahunPert') ? document.getElementById('filterTahunPert').value : '';
 
     const filteredData = dosenData.filter(d => {
         const matchesQuery = d.namaDosen.toLowerCase().includes(query) ||
@@ -715,8 +790,30 @@ function filterTable() {
         const matchesTahun = filterTahun === '' || d.tahunAkademik === filterTahun;
         const matchesProdi = filterProdi === '' || d.programStudi === filterProdi;
         const matchesJenisKelas = filterJenisKelas === '' || d.jenisKelas === filterJenisKelas;
-        const matchesDosen = filterDosen === '' || d.namaDosen.trim().toLowerCase() === filterDosen.trim().toLowerCase();
-        return matchesQuery && matchesTahun && matchesProdi && matchesJenisKelas && matchesDosen;
+        const matchesDosen = filterDosen === '' || normalizeDosenName(d.namaDosen) === normalizeDosenName(filterDosen);
+
+        // Bulan & Tahun filter: check if any meeting date matches
+        let matchesBulan = true;
+        let matchesTahunPert = true;
+        if (filterBulan !== '' || filterTahunPert !== '') {
+            const pertemuan = d.pertemuan || [];
+            if (filterBulan !== '') {
+                matchesBulan = pertemuan.some(p => {
+                    if (!p.date) return false;
+                    const dt = new Date(p.date);
+                    return !isNaN(dt) && dt.getMonth() === parseInt(filterBulan);
+                });
+            }
+            if (filterTahunPert !== '') {
+                matchesTahunPert = pertemuan.some(p => {
+                    if (!p.date) return false;
+                    const dt = new Date(p.date);
+                    return !isNaN(dt) && dt.getFullYear() === parseInt(filterTahunPert);
+                });
+            }
+        }
+
+        return matchesQuery && matchesTahun && matchesProdi && matchesJenisKelas && matchesDosen && matchesBulan && matchesTahunPert;
     });
     renderTable(filteredData);
 }
